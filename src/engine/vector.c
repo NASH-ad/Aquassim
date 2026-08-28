@@ -10,18 +10,15 @@ vec2_t vec2_add(vec2_t a, vec2_t b) {
     return result;
 }
 
-vec2_t vec2_subtract(vec2_t a, vec2_t b) {
+vec2_t vec2_sub(vec2_t a, vec2_t b) {
     vec2_t result;
     result.x = a.x - b.x;
     result.y = a.y - b.y;
     return result;
 }
 
-vec2_t vec2_multiply(vec2_t a, vec2_t b) {
-    vec2_t result;
-    result.x = a.x * b.x;
-    result.y = a.y * b.y;
-    return result;
+float vec2_dot(vec2_t a, vec2_t b) { 
+    return a.x * b.x + a.y * b.y;
 }
 
 vec2_t vec2_scale(vec2_t v, float scalar) {
@@ -31,7 +28,7 @@ vec2_t vec2_scale(vec2_t v, float scalar) {
     return result;
 }
 
-vec2_t vec2_normalize(vec2_t v) {
+vec2_t vec2_norm(vec2_t v) {
     float length = vec2_length(v);
     if (length == 0) {
         return (vec2_t){0, 0};
