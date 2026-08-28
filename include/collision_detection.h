@@ -6,6 +6,6 @@
 #include "vector.h"
 
 int check_collision_circle(rigidbody_t *body1, rigidbody_t *body2, float radius1, float radius2);
-void resolve_collision_circle(rigidbody_t *body1, rigidbody_t *body2, float restitution);
+void resolve_collision_circle(rigidbody_t *body1, rigidbody_t *body2, float restitution, float mu);
 
 #endif // COLLISION_DETECTION_H

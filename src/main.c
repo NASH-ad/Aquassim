@@ -42,6 +42,8 @@ int main(void) {
     const vec2_t screen_center_offset = {(float)mode.width / 2.0f, (float)mode.height / 2.0f};
     int frame = 0;
 
+    ball2.body->velocity = vec2_add(ball2.body->velocity, (vec2_t){0.0f, 1.0f}); // apply a small upward force to ball2 to simulate a bounce
+
     while (sfRenderWindow_isOpen(window)) {
         while (sfRenderWindow_pollEvent(window, &event)) {
             if (event.type == sfEvtClosed) {
@@ -56,7 +58,7 @@ int main(void) {
 
         if (check_collision_circle(ball1.body, ball2.body, ball1.radius, ball2.radius)) {
             printf("Collision detected!\n");
-            resolve_collision_circle(ball1.body, ball2.body, 5.0f);
+            resolve_collision_circle(ball1.body, ball2.body, 1.0f, 0.5f); // restitution and friction coefficient
         }
         frame++;
 
