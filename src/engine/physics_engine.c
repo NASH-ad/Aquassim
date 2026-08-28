@@ -8,7 +8,7 @@ physics_engine_t physics_engine_create() {
     return engine;
 }
 
-void physics_engine_add_body(physics_engine_t *engine, rigidbody_t body) {
+rigidbody_t *physics_engine_add_body(physics_engine_t *engine, rigidbody_t body) {
     if (engine->body_count + 1 > engine->body_capacity) {
         engine->bodies = realloc(engine->bodies, (engine->body_count + 20) * sizeof(rigidbody_t));
         engine->body_capacity = engine->body_count + 20;
@@ -19,6 +19,7 @@ void physics_engine_add_body(physics_engine_t *engine, rigidbody_t body) {
     }
     engine->bodies[engine->body_count] = body;
     engine->body_count++;
+    return &engine->bodies[engine->body_count - 1];
 }
 
 void physics_engine_update(physics_engine_t *engine, float delta_time) {

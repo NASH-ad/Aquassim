@@ -13,7 +13,7 @@ typedef struct physics_engine {
 } physics_engine_t;
 
 physics_engine_t physics_engine_create();
-void physics_engine_add_body(physics_engine_t *engine, rigidbody_t body);
+rigidbody_t *physics_engine_add_body(physics_engine_t *engine, rigidbody_t body);
 void physics_engine_update(physics_engine_t *engine, float delta_time);
 
 #endif // ENGINE_H
