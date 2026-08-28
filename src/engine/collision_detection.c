@@ -9,7 +9,7 @@ int check_collision_circle(rigidbody_t *body1, rigidbody_t *body2, float radius1
     return distance < radius_sum;
 }
 
-void resolve_collision_circle(rigidbody_t *a, rigidbody_t *b, float rad1, float rad2, float restitution) {
+void resolve_collision_circle(rigidbody_t *a, rigidbody_t *b, float restitution) {
     // n : normal unit vector from b to a
     vec2_t n = vec2_norm(vec2_sub(a->position, b->position));
     vec2_t relative_velocity = vec2_sub(a->velocity, b->velocity);
