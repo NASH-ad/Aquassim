@@ -8,6 +8,7 @@ rigidbody_t rigidbody_create(vec2_t position, vec2_t velocity, float mass) {
     rb.position = position;
     rb.velocity = velocity;
     rb.mass = mass;
+    rb.inv_mass = (mass != 0.0f) ? 1.0f / mass : 0.0f; // Avoid division by zero
     return rb;
 }
 

@@ -8,6 +8,7 @@ typedef struct rigidbody {
     vec2_t position;
     vec2_t velocity;
     float mass;
+    float inv_mass;
 } rigidbody_t;
 
 rigidbody_t rigidbody_create(vec2_t position, vec2_t velocity, float mass);
