@@ -14,7 +14,7 @@ void physics_engine_add_body(physics_engine_t *engine, rigidbody_t body) {
         engine->body_capacity = engine->body_count + 20;
     }
     if (engine->bodies == NULL) {
-        fprintf(stderr, "\x1B[31mFailed to allocate memory for new rigidbody(%2u).\x1B[0m\n", engine->body_count + 1);
+        fprintf(stderr, "\x1B[31mFailed to allocate memory for new rigidbody(%ld).\x1B[0m\n", engine->body_count + 1);
         exit(EXIT_FAILURE);
     }
     engine->bodies[engine->body_count] = body;

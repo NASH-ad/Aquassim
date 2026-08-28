@@ -33,7 +33,7 @@ vec2_t vec2_scale(vec2_t v, float scalar) {
 
 vec2_t vec2_normalize(vec2_t v) {
     float length = vec2_length(v);
-    if (length <= 0) {
+    if (length == 0) {
         return (vec2_t){0, 0};
     }
     return vec2_scale(v, 1.0f / length);
