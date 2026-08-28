@@ -6,7 +6,8 @@ SRCS	=	src/main.c \
 			src/engine/vector.c \
 			src/engine/rigidbody.c \
 			src/engine/collision_detection.c \
-			src/engine/physics_engine.c
+			src/engine/physics_engine.c \
+			src/entities/ball.c \
 
 LIBS	=	-Iinclude -lm -lcsfml-system -lcsfml-window -lcsfml-graphics
 
