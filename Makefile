@@ -3,6 +3,8 @@ NAME	=	aquassim
 CFLAGS	=	-Wall -Wextra -Werror -g
 
 SRCS	=	src/main.c \
+			src/init.c \
+			src/clean.c \
 			src/engine/vector.c \
 			src/engine/rigidbody.c \
 			src/engine/collision_detection.c \
