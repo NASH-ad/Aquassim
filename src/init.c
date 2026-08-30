@@ -13,11 +13,17 @@ void init_simulator(simulator_t *sim) {
     sim->mode = (sfVideoMode){1280, 700, 32};
     sim->window = sfRenderWindow_create(sim->mode, "Aquassim", sfClose, NULL);
     sfRenderWindow_setFramerateLimit(sim->window, 60);
+    sim->view = sfView_create();
+    sfView_setCenter(sim->view, (sfVector2f){0.0f, 0.0f});
+    sfView_setSize(sim->view, (sfVector2f){(float)sim->mode.width, (float)sim->mode.height});
+    sfRenderWindow_setView(sim->window, sim->view);
 
     // Load background texture and create sprite
     sim->background = sfSprite_create();
     sim->background_texture = sfTexture_createFromFile("assets/Background.png", NULL); 
     sfSprite_setTexture(sim->background, sim->background_texture, sfTrue);
+    // Set the background sprite position to center it in the window
+    sfSprite_setPosition(sim->background, (sfVector2f){-(float)sim->mode.width / 2.0f, -(float)sim->mode.height / 2.0f});
 
     // Create circle shapes to render balls
     sim->circle = sfCircleShape_create();
