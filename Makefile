@@ -11,6 +11,8 @@ SRCS	=	src/main.c \
 			src/engine/physics_engine.c \
 			src/engine/ecs.c \
 			src/engine/systems.c \
+			src/engine/camera.c \
+			src/engine/input.c \
 			src/entities/ball.c \
 
 LIBS	=	-Iinclude -lm -lcsfml-system -lcsfml-window -lcsfml-graphics

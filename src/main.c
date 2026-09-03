@@ -6,28 +6,6 @@
 #include <SFML/Graphics.h>
 #include "simulator.h"
 
-void handle_input(simulator_t *sim) {
-    if (sfKeyboard_isKeyPressed(sfKeyEscape)) {
-        sfRenderWindow_close(sim->window);
-    }
-    if (sfKeyboard_isKeyPressed(sfKeyUp)) {
-        sfView_move(sim->view, (sfVector2f){0.0f, -10.0f});
-        sfSprite_move(sim->background, (sfVector2f){0.0f, -10.0f});
-    }
-    if (sfKeyboard_isKeyPressed(sfKeyDown)) {
-        sfView_move(sim->view, (sfVector2f){0.0f, 10.0f});
-        sfSprite_move(sim->background, (sfVector2f){0.0f, 10.0f});
-    }
-    if (sfKeyboard_isKeyPressed(sfKeyLeft)) {
-        sfView_move(sim->view, (sfVector2f){-10.0f, 0.0f});
-        sfSprite_move(sim->background, (sfVector2f){-10.0f, 0.0f});
-    }
-    if (sfKeyboard_isKeyPressed(sfKeyRight)) {
-        sfView_move(sim->view, (sfVector2f){10.0f, 0.0f});
-        sfSprite_move(sim->background, (sfVector2f){10.0f, 0.0f});
-    }
-}
-
 int main(void) {
     const int pixels_per_unit = 50;
     simulator_t sim = {0};
