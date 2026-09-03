@@ -44,31 +44,19 @@ int main(void) {
             }
         }
         handle_input(&sim);
-        printf("\x1B[1;35mFrame %d: \x1B[0m\n", frame);
-        physics_engine_update(&(sim.engine), delta_time);
-
-        printf("Body 1 Position: (%f, %f)\n", sim.ball1.body->position.x, sim.ball1.body->position.y);
-        printf("Body 2 Position: (%f, %f)\n", sim.ball2.body->position.x, sim.ball2.body->position.y);
-
-        if (check_collision_circle(sim.ball1.body, sim.ball2.body, sim.ball1.radius, sim.ball2.radius)) {
-            printf("Collision detected!\n");
-            resolve_collision_circle(sim.ball1.body, sim.ball2.body, 1.0f, 0.5f); // restitution and friction coefficient
-        }
+        
         frame++;
+
+        // Update simulation
+        system_integrate(&(sim.position_pool), &(sim.velocity_pool), &(sim.invmass_pool), delta_time);
+        system_resolve_collision(&(sim.radius_pool), &(sim.position_pool), &(sim.velocity_pool), &(sim.invmass_pool), 0.8f, 0.5f);
 
         sfRenderWindow_clear(sim.window, sfBlack);
         sfRenderWindow_setView(sim.window, sim.view);
         sfRenderWindow_drawSprite(sim.window, sim.background, NULL);
 
         // Render balls
-        sfCircleShape_setPosition(sim.circle, (sfVector2f){(sim.ball1.body->position.x - sim.ball1.radius) * pixels_per_unit,
-            (sim.ball1.body->position.y - sim.ball1.radius) * pixels_per_unit});
-        sfRenderWindow_drawCircleShape(sim.window, sim.circle, NULL);
-
-        sfCircleShape_setPosition(sim.circle, (sfVector2f){(sim.ball2.body->position.x - sim.ball2.radius) * pixels_per_unit,
-            (sim.ball2.body->position.y - sim.ball2.radius) * pixels_per_unit});
-        sfRenderWindow_drawCircleShape(sim.window, sim.circle, NULL);
-        
+        system_draw_circles(&(sim.radius_pool), &(sim.position_pool), sim.circle, sim.window, pixels_per_unit);
 
         sfRenderWindow_display(sim.window);
     }

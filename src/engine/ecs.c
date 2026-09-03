@@ -1,6 +1,7 @@
 #include "ecs.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 bool entity_equal(entity_t a, entity_t b) {
     return a.id == b.id && a.gen == b.gen;
@@ -118,7 +119,7 @@ void pool_remove(pool_t *pool, uint32_t entity_index) {
     pool->count--;
 }
 
-void pool_at(pool_t *pool, uint32_t dense_index) {
+void *pool_at(pool_t *pool, uint32_t dense_index) {
     if (dense_index >= pool->count) {
         return NULL; // Invalid dense index
     }
