@@ -1,5 +1,6 @@
 #ifndef VECTOR_H
 #define VECTOR_H
+    #define VEC2_NULL (vec2_t){0.0f, 0.0f}
 
 typedef struct vec2 {
     float x;

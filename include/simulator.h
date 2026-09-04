@@ -6,6 +6,10 @@
     #include "ball.h"
     #include "ecs.h"
     #include <SFML/Graphics.h>
+    #include "creature.h"
+
+
+typedef struct { entity_t creature; } part_of_t;
 
 typedef struct alt_simulator {
     physics_engine_t engine;
@@ -16,11 +20,15 @@ typedef struct alt_simulator {
     sfView *view;
     sfSprite *background;
     sfTexture *background_texture;
-    entity_manager_t entity_manager;
+    entity_manager_t creature_manager;
+    pool_t creature_pool;
+    entity_manager_t mass_manager;
     pool_t position_pool;
     pool_t velocity_pool;
     pool_t invmass_pool;
     pool_t radius_pool;
+    joint_pool_t joint_pool;
+    pool_t part_of_pool;
 } simulator_t;
 
 void init_simulator(simulator_t *sim);
