@@ -2,13 +2,13 @@
 
 void init_simulator(simulator_t *sim) {
     const int pixels_per_unit = 50;
-    em_init(&(sim->entity_manager));
+    em_init(&(sim->mass_manager));
     pool_init(&(sim->position_pool), sizeof(vec2_t), MAX_ENTITIES);
     pool_init(&(sim->velocity_pool), sizeof(vec2_t), MAX_ENTITIES);
     pool_init(&(sim->invmass_pool), sizeof(float), MAX_ENTITIES);
     pool_init(&(sim->radius_pool), sizeof(float), MAX_ENTITIES);
-    entity_t ball1 = em_create(&(sim->entity_manager));
-    entity_t ball2 = em_create(&(sim->entity_manager));
+    entity_t ball1 = em_create(&(sim->mass_manager));
+    entity_t ball2 = em_create(&(sim->mass_manager));
     vec2_t *ball1_position = (vec2_t *)pool_add(&(sim->position_pool), ball1.id);
     vec2_t *ball1_velocity = (vec2_t *)pool_add(&(sim->velocity_pool), ball1.id);
     float *ball1_invmass = (float *)pool_add(&(sim->invmass_pool), ball1.id);

@@ -13,7 +13,7 @@ typedef struct { uint32_t id; uint32_t gen; } entity_t;
 
 #define ECS_INVALID UINT32_MAX
 #define NULL_ENTITY (entity_t){ ECS_INVALID, 0u }
-#define MAX_ENTITIES 4096u
+#define MAX_ENTITIES 16484u
 
 typedef struct {
     uint32_t generations[MAX_ENTITIES];
