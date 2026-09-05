@@ -21,6 +21,8 @@ int main(void) {
                 sfRenderWindow_close(sim.window);
             }
         }
+        sim.delta_time = sfTime_asSeconds(sfClock_restart(sim.clock));
+        sim.time = sfSeconds(sim.delta_time + sfTime_asSeconds(sim.time));
         handle_input(&sim);
         
         frame++;

@@ -1,6 +1,8 @@
 #include "simulator.h"
 #include "ecs.h"
 #include "collision_detection.h"
+#include "creature.h"
+#include <math.h>
 
 /*
 Integrate the positions of entities based on their velocities and inverse masses.
@@ -74,5 +76,42 @@ void system_draw_circles(pool_t *radius_pool, pool_t *position_pool, sfCircleSha
         sfCircleShape_setOrigin(circle, (sfVector2f){(*radius) * pixels_per_unit / 2.0f, (*radius) * pixels_per_unit / 2.0f});
         sfCircleShape_setPosition(circle, (sfVector2f){position->x * pixels_per_unit, position->y * pixels_per_unit});
         sfRenderWindow_drawCircleShape(window, circle, NULL);
+    }
+}
+
+//————————————————————————————————————————————————————
+//-------- Systems for creature management ---------
+//————————————————————————————————————————————————————
+
+// This systems update the length of the muscles to simulate contraction and relaxation over time.
+void system_muscles(entity_manager_t *mass_manager, joint_pool_t *pool, float time) {
+    joint_t *joint = NULL;
+    float s = 0.0f;
+
+    for (uint32_t i = 0; i < pool->count; i++) {
+        joint = &(pool->data[i]);
+        
+        if (!em_alive(mass_manager, joint->m_a) || !em_alive(mass_manager, joint->m_b) || !joint->is_muscle) {
+            continue;
+        }
+        s = sinf(2 * M_PI * joint->frequency * time + joint->phase);
+        joint->current_rest = joint->rest_length * (1.0f + joint->amplitude * s);
+    }
+}
+
+// PURGE JOINTS SYSTEM
+// This system removes all joints associated with a dead mass entity.
+void system_purge_joints(simulator_t *sim) {
+    uint32_t i = 0;
+    joint_t *joint = NULL;
+
+    while (i < sim->joint_pool.count) {
+        joint = &(sim->joint_pool.data[i]);
+        if (!em_alive(&(sim->mass_manager), joint->m_a) || !em_alive(&(sim->mass_manager), joint->m_b)) {
+            sim->joint_pool.data[i] = sim->joint_pool.data[sim->joint_pool.count - 1];
+            sim->joint_pool.count--;
+            continue; // Do not increment i, as we need to check the new joint at index i
+        }
+        i++;
     }
 }

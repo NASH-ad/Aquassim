@@ -12,6 +12,9 @@
 typedef struct { entity_t creature; } part_of_t;
 
 typedef struct alt_simulator {
+    sfTime time;
+    float delta_time;
+    sfClock *clock;
     physics_engine_t engine;
     vec2_t *gravity;
     sfCircleShape *circle;

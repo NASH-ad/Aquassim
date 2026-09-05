@@ -2,6 +2,11 @@
 
 void init_simulator(simulator_t *sim) {
     const int pixels_per_unit = 50;
+
+    sim->clock = sfClock_create();
+    sim->delta_time = 0.0f;
+    sim->time = sfTime_Zero;
+
     em_init(&(sim->mass_manager));
     pool_init(&(sim->position_pool), sizeof(vec2_t), MAX_ENTITIES);
     pool_init(&(sim->velocity_pool), sizeof(vec2_t), MAX_ENTITIES);

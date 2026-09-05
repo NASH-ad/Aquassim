@@ -47,6 +47,7 @@ typedef struct {
     entity_t m_a;
     entity_t m_b;
     float rest_length; // Rest length of the joint
+    float current_rest;
     bool is_muscle; // Flag to indicate if the joint is a muscle
     float amplitude;  // Amplitude of the muscle contraction
     float frequency; // Frequency of the muscle contraction
@@ -59,5 +60,10 @@ typedef struct {
     uint32_t count;
     uint32_t capacity;
 } joint_pool_t;
+
+void joint_pool_init(joint_pool_t *pool, uint32_t capacity);
+joint_t *joint_pool_add(joint_pool_t *pool);
+void joint_pool_remove(joint_pool_t *pool, entity_t creature);
+void joint_pool_destroy(joint_pool_t *pool);
 
 #endif // CREATURE_H

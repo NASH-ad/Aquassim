@@ -2,6 +2,54 @@
 #include "simulator.h"
 #include "aquassim.h"
 
+/*
+------- Joint pool handling ---------
+*/
+void joint_pool_init(joint_pool_t *pool, uint32_t capacity) {
+    pool->data = (joint_t *)malloc(sizeof(joint_t) * capacity);
+    if (!pool->data) {
+        LOG("[ERROR] Failed to allocate memory for joint pool\n");
+        pool->count = 0;
+        pool->capacity = 0;
+        return;
+    }
+    pool->count = 0;
+    pool->capacity = capacity;
+}
+
+joint_t *joint_pool_add(joint_pool_t *pool) {
+    if (pool->count >= pool->capacity) {
+        LOG("[ERROR] Joint pool is full, cannot add more joints\n");
+        return NULL;
+    }
+    joint_t *joint = &(pool->data[pool->count]);
+    pool->count++;
+    return joint;
+}
+
+void joint_pool_remove(joint_pool_t *pool, entity_t creature) {
+    for (uint32_t i = 0; i < pool->count; i++) {
+        if (pool->data[i].creature.id == creature.id) {
+            // Move the last joint to the current position to fill the gap
+            pool->data[i] = pool->data[pool->count - 1];
+            pool->count--;
+            return;
+        }
+    }
+}
+
+void joint_pool_destroy(joint_pool_t *pool) {
+    if (pool->data) {
+        free(pool->data);
+        pool->data = NULL;
+    }
+    pool->count = 0;
+    pool->capacity = 0;
+}
+
+/*
+-------- Creature spawning ---------
+*/
 entity_t spawn_creature(simulator_t *sim, const genome_t *genome, vec2_t origin) {
     creature_t *creature = NULL;
     entity_t creature_entity = em_create(&(sim->creature_manager));
@@ -64,7 +112,19 @@ entity_t spawn_creature(simulator_t *sim, const genome_t *genome, vec2_t origin)
             continue;
         }
         rest_length = vec2_length(vec2_sub(*pos_a, *pos_b));
-        // Add joint to the pool and fill its data
+        joint = joint_pool_add(&(sim->joint_pool));
+        if (!joint) {
+            LOG("[ERROR] Failed to add joint to the pool\n");
+            continue;
+        }
+        joint->creature = creature_entity;
+        joint->m_a = a;
+        joint->m_b = b;
+        joint->rest_length = rest_length;
+        joint->is_muscle = link->is_muscle;
+        joint->amplitude = link->amplitude;
+        joint->frequency = link->frequency;
+        joint->phase = link->phase;
     }
 
     return creature_entity;
