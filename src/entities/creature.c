@@ -55,10 +55,13 @@ entity_t spawn_creature(simulator_t *sim, const genome_t *genome, vec2_t origin)
     entity_t creature_entity = em_create(&(sim->creature_manager));
     
     if (creature_entity.id == NULL_ENTITY.id) {
+        LOG("[ERROR] Failed to create creature entity\n");
         return NULL_ENTITY; // Return an invalid entity if creation failed
     }
-    creature = (creature_t *)pool_get(&(sim->creature_pool), creature_entity.id);
+
+    creature = (creature_t *)pool_add(&(sim->creature_pool), creature_entity.id);
     if (!creature) {
+        LOG("[ERROR] Failed to allocate creature component\n");
         return NULL_ENTITY; // Return an invalid entity if retrieval failed
     }
 
@@ -70,7 +73,7 @@ entity_t spawn_creature(simulator_t *sim, const genome_t *genome, vec2_t origin)
 
     // Spawn masses based on the genome
     for (uint32_t i = 0; i < genome->node_count; i++) {
-        gene_node_t *node = &(genome->nodes[i]);
+        const gene_node_t *node = &(genome->nodes[i]);
         entity_t mass_entity = em_create(&(sim->mass_manager));
         float *radius = NULL;
         float *invmass = NULL;
@@ -128,4 +131,25 @@ entity_t spawn_creature(simulator_t *sim, const genome_t *genome, vec2_t origin)
     }
 
     return creature_entity;
+}
+
+vec2_t creature_centroid(creature_t *creature, pool_t *position_pool) {
+    vec2_t centroid = (vec2_t){0.0f, 0.0f};
+    uint32_t count = 0;
+
+    for (uint32_t i = 0; i < creature->mass_count; i++) {
+        entity_t mass = creature->masses[i];
+        vec2_t *pos = (vec2_t *)pool_get(position_pool, mass.id);
+        if (!pos) {
+            continue;
+        }
+        centroid = vec2_add(centroid, *pos);
+        count++;
+    }
+
+    if (count > 0) {
+        centroid = vec2_scale(centroid, 1.0f / (float)count);
+    }
+
+    return centroid;
 }

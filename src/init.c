@@ -1,5 +1,43 @@
 #include "simulator.h"
 
+static genome_t create_sample_genome(float amplitude, float freq) {
+    genome_t genome = {0};
+
+    // Create a simple creature with 3 nodes and 2 links
+    genome.node_count = 5;
+    for (uint32_t i = 0; i < 5; i++) {
+        genome.nodes[i].offset = (vec2_t){(float)i * 0.8f - 1.6f, (float)i * 0.8f + 1.6f};
+        genome.nodes[i].radius = 5.0f;
+        genome.nodes[i].invmass = 1.0f;
+    }
+
+    uint32_t k = 0;
+
+    for (uint32_t i = 0; i + 1 < 5; i++) {
+        genome.links[k] = (gene_link_t){
+            .a = i,
+            .b = i + 1,
+            .is_muscle = false,
+            .amplitude = 0,
+            .frequency = 0,
+            .phase = 0.0f};
+        k++;
+    }
+
+    for (uint32_t i = 0; i + 2 < 5; i++) {
+        genome.links[k] = (gene_link_t){
+            .a = i,
+            .b = i + 2,
+            .is_muscle = true,
+            .amplitude = amplitude,
+            .frequency = freq,
+            .phase = (float)i * 1.6f};
+        k++;
+    }
+    genome.link_count = k;
+    return genome;
+}
+
 void init_simulator(simulator_t *sim) {
     const int pixels_per_unit = 50;
 
@@ -13,28 +51,22 @@ void init_simulator(simulator_t *sim) {
     pool_init(&(sim->velocity_pool), sizeof(vec2_t), MAX_ENTITIES);
     pool_init(&(sim->invmass_pool), sizeof(float), MAX_ENTITIES);
     pool_init(&(sim->radius_pool), sizeof(float), MAX_ENTITIES);
-    entity_t ball1 = em_create(&(sim->mass_manager));
-    entity_t ball2 = em_create(&(sim->mass_manager));
-    vec2_t *ball1_position = (vec2_t *)pool_add(&(sim->position_pool), ball1.id);
-    vec2_t *ball1_velocity = (vec2_t *)pool_add(&(sim->velocity_pool), ball1.id);
-    float *ball1_invmass = (float *)pool_add(&(sim->invmass_pool), ball1.id);
-    float *ball1_radius = (float *)pool_add(&(sim->radius_pool), ball1.id);
-    vec2_t *ball2_position = (vec2_t *)pool_add(&(sim->position_pool), ball2.id);
-    vec2_t *ball2_velocity = (vec2_t *)pool_add(&(sim->velocity_pool), ball2.id);
-    float *ball2_invmass = (float *)pool_add(&(sim->invmass_pool), ball2.id);
-    float *ball2_radius = (float *)pool_add(&(sim->radius_pool), ball2.id);
-    *ball1_position = (vec2_t){-5.0f, 0.0f};
-    *ball1_velocity = (vec2_t){2.0f, 0.0f};
-    *ball1_invmass = 1.0f;
-    *ball1_radius = 2.0f;
-    *ball2_position = (vec2_t){10.0f, 1.0f};
-    *ball2_velocity = (vec2_t){-5.0f, 0.0f};
-    *ball2_invmass = 600.0f;
-    *ball2_radius = 2.0f;
+    pool_init(&(sim->part_of_pool), sizeof(part_of_t), MAX_ENTITIES);
+    em_init(&(sim->creature_manager));
+    pool_init(&(sim->creature_pool), sizeof(creature_t), MAX_CREATURES);
+    joint_pool_init(&(sim->joint_pool), MAX_ENTITIES);
+
+    genome_t sample = create_sample_genome(0.35f, 1.5f);
+    entity_t e = spawn_creature(sim, &sample, (vec2_t){0.0f, 0.0f});
+    if (e.id == NULL_ENTITY.id) {
+        LOG("[ERROR] Failed to spawn sample creature\n");
+    } else {
+        LOG("INFO: Sample creature spawned with entity ID: %u\n", e.id);
+    }
     
     // Window and graphics initialization
     sim->circle = sfCircleShape_create();
-    sfCircleShape_setRadius(sim->circle, (*ball1_radius) * pixels_per_unit);
+    sfCircleShape_setRadius(sim->circle, 5.0f * pixels_per_unit);
     sfCircleShape_setFillColor(sim->circle, sfRed);
 
     sim->mode = (sfVideoMode){1280, 700, 32};
