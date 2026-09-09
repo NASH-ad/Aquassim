@@ -172,5 +172,47 @@ void system_fitness(simulator_t *sim) {
 }
 
 void system_drag(simulator_t *sim, float Cn, float Ct) {
+    joint_t *joint = NULL;
 
+    for (uint32_t i = 0; i < sim->joint_pool.count; i++) {
+        joint = &(sim->joint_pool.data[i]);
+        if (!em_alive(&(sim->mass_manager), joint->m_a) || !em_alive(&(sim->mass_manager), joint->m_b)
+            || !joint->is_muscle) {
+            continue;
+        }
+
+        vec2_t *pos_a = (vec2_t *)pool_get(&(sim->position_pool), joint->m_a.id);
+        vec2_t *pos_b = (vec2_t *)pool_get(&(sim->position_pool), joint->m_b.id);
+        vec2_t *vel_a = (vec2_t *)pool_get(&(sim->velocity_pool), joint->m_a.id);
+        vec2_t *vel_b = (vec2_t *)pool_get(&(sim->velocity_pool), joint->m_b.id);
+        float *invmass_a = (float *)pool_get(&(sim->invmass_pool), joint->m_a.id);
+        float *invmass_b = (float *)pool_get(&(sim->invmass_pool), joint->m_b.id);
+
+        if (!pos_a || !pos_b || !vel_a || !vel_b || !invmass_a || !invmass_b) {
+            continue;
+        }
+
+        vec2_t axis = vec2_sub(*pos_b, *pos_a);
+        float length = vec2_length(axis);
+        if (length < 1e-6f) {
+            continue;
+        }
+
+        vec2_t tangential = vec2_scale(axis, 1.0f / length);
+        vec2_t normal = (vec2_t){-tangential.y, tangential.x};
+
+        vec2_t v = vec2_scale(vec2_add(*vel_a, *vel_b), 0.5f);
+        float v_tangential = vec2_dot(v, tangential);
+        float v_normal = vec2_dot(v, normal);
+
+        // Implicit drag forces. We divide instead of minus because minus can cause instability
+        float kn = Cn * fabsf(v_normal) * length * 0.5f;
+        float kt = Ct * fabsf(v_tangential) * length * 0.5f;
+        float vn_new = v_normal / (1.0f + kn * (*invmass_a + *invmass_b) * sim->delta_time);
+        float vt_new = v_tangential / (1.0f + kt * (*invmass_a + *invmass_b) * sim->delta_time);
+
+        vec2_t dv = vec2_add(vec2_scale(normal, vn_new - v_normal), vec2_scale(tangential, vt_new - v_tangential));
+        *vel_a = vec2_add(*vel_a, dv);
+        *vel_b = vec2_add(*vel_b, dv);
+    }
 }

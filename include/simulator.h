@@ -44,6 +44,11 @@ void system_resolve_collision(pool_t *radius_pool, pool_t *position_pool, pool_t
 void system_draw_circles(pool_t *radius_pool, pool_t *position_pool, sfCircleShape *circle, sfRenderWindow *window, int pixels_per_unit);
 
 void system_muscles(entity_manager_t *mass_manager, joint_pool_t *pool, float time);
+void system_purge_joints(simulator_t *sim);
+void system_solve_joints(simulator_t *sim, int iters);
+void system_derive_velocity(simulator_t *sim);
+void system_fitness(simulator_t *sim);
+void system_drag(simulator_t *sim, float Cn, float Ct);
 
 // Utils
 void handle_input(simulator_t *sim);
