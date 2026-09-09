@@ -9,7 +9,7 @@
     #include "creature.h"
 
 
-typedef struct { entity_t creature; } part_of_t;
+typedef struct part_of { entity_t creature; } part_of_t;
 
 typedef struct alt_simulator {
     sfTime time;

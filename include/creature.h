@@ -68,5 +68,6 @@ void joint_pool_remove(joint_pool_t *pool, entity_t creature);
 void joint_pool_destroy(joint_pool_t *pool);
 
 vec2_t creature_centroid(creature_t *creature, simulator_t *sim);
+entity_t spawn_creature(simulator_t *sim, const genome_t *genome, vec2_t origin);
 
 #endif // CREATURE_H
