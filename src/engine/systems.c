@@ -8,18 +8,17 @@
 Integrate the positions of entities based on their velocities and inverse masses.
 This function iterates over all entities in the position and velocity pools, updating their positions.
 */
-void system_integrate(pool_t *position_pool, pool_t *velocity_pool, pool_t *invmass_pool, float delta_time) {
-    pool_t *iterator_pool = position_pool->count < velocity_pool->count ? position_pool : velocity_pool;
-
-    for (uint32_t i = 0; i < iterator_pool->count; ++i) {
-        uint32_t entity_index = iterator_pool->dense_set[i];
-        vec2_t *position = (vec2_t *)pool_get(position_pool, entity_index);
-        vec2_t *velocity = (vec2_t *)pool_get(velocity_pool, entity_index);
-        float *invmass = (float *)pool_get(invmass_pool, entity_index);
-        if (!position || !velocity || !invmass || *invmass <= 0.0f) {
-            continue; // Skip if any component is missing
+void system_integrate(simulator_t *sim) {
+    for (uint32_t i = 0; i < sim->position_pool.count; i++) {
+        uint32_t entity_index = sim->position_pool.dense_set[i];
+        vec2_t *pos = (vec2_t *)pool_at(&(sim->position_pool), entity_index);
+        vec2_t *vel = (vec2_t *)pool_at(&(sim->velocity_pool), entity_index);
+        vec2_t *prev_pos = (vec2_t *)pool_at(&(sim->prev_pos_pool), entity_index);
+        if (!pos || !vel || !prev_pos) {
+            continue;
         }
-        *position = vec2_add(*position, vec2_scale(*velocity, delta_time));
+        *prev_pos = *pos;
+        *pos = vec2_add(*pos, vec2_scale(*vel, sim->delta_time));
     }
 }
 
@@ -114,4 +113,64 @@ void system_purge_joints(simulator_t *sim) {
         }
         i++;
     }
+}
+
+void system_solve_joints(simulator_t *sim, int iters) {
+    for (int it =0; it < iters; i++) {
+        for (uint32_t i = 0; i < sim->joint_pool.count; i++) {
+            joint_t *joint = &(sim->joint_pool.data[i]);
+            if (!em_alive(&(sim->mass_manager), joint->m_a) || !em_alive(&(sim->mass_manager), joint->m_b)) {
+                continue;
+            }
+            vec2_t *pos_a = (vec2_t *)pool_get(&(sim->position_pool), joint->m_a.id);
+            vec2_t *pos_b = (vec2_t *)pool_get(&(sim->position_pool), joint->m_b.id);
+            float *invmass_a = (float *)pool_get(&(sim->invmass_pool), joint->m_a.id);
+            float *invmass_b = (float *)pool_get(&(sim->invmass_pool), joint->m_b.id);
+            if (!pos_a || !pos_b || !invmass_a || !invmass_b) {
+                continue;
+            }
+            vec2_t delta = vec2_sub(*pos_b, *pos_a);
+            float dist = vec2_length(delta);
+            float wsum = *invmass_a + *invmass_b;
+            if (dist < 1e-6f || wsum == 0.0f) {
+                continue;
+            }
+            vec2_t dir = vec2_scale(delta, 1.0f / dist);
+            vec2_t correction = vec2_scale(dir, (dist - joint->current_rest) / wsum);
+            *pos_a = vec2_add(*pos_a, vec2_scale(correction, *invmass_a));
+            *pos_b = vec2_sub(*pos_b, vec2_scale(correction, *invmass_b));
+        }
+    }
+}
+
+void system_derive_velocity(simulator_t *sim) {
+    float inv_dt = 1.0f / sim->delta_time;
+
+    for (uint32_t i = 0; i < sim->position_pool.count; i++) {
+        uint32_t entity_index = sim->position_pool.dense_set[i];
+        vec2_t *pos = (vec2_t *)pool_at(&(sim->position_pool), i);
+        vec2_t *prev_pos = (vec2_t *)pool_get(&(sim->prev_pos_pool), entity_index);
+        vec2_t *vel = (vec2_t *)pool_get(&(sim->velocity_pool), entity_index);
+
+        if (!pos || !prev_pos || !vel) {
+            continue;
+        }
+
+        *vel = vec2_scale(vec2_sub(*pos, *prev_pos), inv_dt);
+    }
+}
+
+void system_fitness(simulator_t *sim) {
+    creature_t *creature = NULL;
+    vec2_t centroid = (vec2_t){0.0f, 0.0f};
+
+    for (uint32_t i =0; i < sim->creature_pool.count; i++) {
+        creature = (creature_t *)pool_at(&(sim->creature_pool), i);
+        centroid = creature_centroid(creature, sim);
+        creature->fitness = vec2_length(vec2_sub(centroid, creature->spawn_centroid));
+    }
+}
+
+void system_drag(simulator_t *sim, float Cn, float Ct) {
+
 }

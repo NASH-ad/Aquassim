@@ -40,6 +40,7 @@ typedef struct creature {
     float energy;
     entity_t masses[MAX_MASSES_PER_CREATURE];
     uint32_t mass_count;
+    vec2_t spawn_centroid;
 } creature_t;
 
 typedef struct {
@@ -65,5 +66,7 @@ void joint_pool_init(joint_pool_t *pool, uint32_t capacity);
 joint_t *joint_pool_add(joint_pool_t *pool);
 void joint_pool_remove(joint_pool_t *pool, entity_t creature);
 void joint_pool_destroy(joint_pool_t *pool);
+
+vec2_t creature_centroid(creature_t *creature, simulator_t *sim);
 
 #endif // CREATURE_H

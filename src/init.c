@@ -9,6 +9,7 @@ void init_simulator(simulator_t *sim) {
 
     em_init(&(sim->mass_manager));
     pool_init(&(sim->position_pool), sizeof(vec2_t), MAX_ENTITIES);
+    pool_init(&(sim->prev_pos_pool), sizeof(vec2_t), MAX_ENTITIES);
     pool_init(&(sim->velocity_pool), sizeof(vec2_t), MAX_ENTITIES);
     pool_init(&(sim->invmass_pool), sizeof(float), MAX_ENTITIES);
     pool_init(&(sim->radius_pool), sizeof(float), MAX_ENTITIES);
