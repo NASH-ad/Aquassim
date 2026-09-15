@@ -72,7 +72,7 @@ void init_simulator(simulator_t *sim) {
     sfCircleShape_setRadius(sim->circle, 5.0f * pixels_per_unit);
     sfCircleShape_setFillColor(sim->circle, sfRed);
 
-    sim->mode = (sfVideoMode){1280, 700, 32};
+    sim->mode = (sfVideoMode){1920, 1080, 32};
     sim->window = sfRenderWindow_create(sim->mode, "Aquassim", sfClose, NULL);
     sfRenderWindow_setFramerateLimit(sim->window, 60);
     sim->view = sfView_create();
