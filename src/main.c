@@ -34,7 +34,7 @@ int main(void) {
         system_integrate(&sim);
         system_solve_joints(&sim, 8);
         system_derive_velocity(&sim);
-        system_fitness(&sim);
+        //system_fitness(&sim);
 
         sfRenderWindow_clear(sim.window, sfBlack);
         sfRenderWindow_setView(sim.window, sim.view);

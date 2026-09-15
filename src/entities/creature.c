@@ -124,6 +124,7 @@ entity_t spawn_creature(simulator_t *sim, const genome_t *genome, vec2_t origin)
         joint->m_a = a;
         joint->m_b = b;
         joint->rest_length = rest_length;
+        joint->current_rest = rest_length;
         joint->is_muscle = link->is_muscle;
         joint->amplitude = link->amplitude;
         joint->frequency = link->frequency;

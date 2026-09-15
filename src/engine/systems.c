@@ -48,7 +48,7 @@ void system_draw_joints(simulator_t *sim, sfRenderWindow *window, int pixels_per
     for (uint32_t i = 0; i < sim->joint_pool.count; ++i) {
 
         joint_t *joint = &(sim->joint_pool.data[i]);
-        if (!em_alive(&(sim->mass_manager), joint->m_a) || !em_alive(&(sim->mass_manager), joint->m_b)) {
+        if (!em_alive(&(sim->mass_manager), joint->m_a) || !em_alive(&(sim->mass_manager), joint->m_b) || joint->is_muscle) {
             continue;
         }
 

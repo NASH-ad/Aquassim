@@ -4,16 +4,21 @@ static genome_t create_sample_genome(float amplitude, float freq) {
     genome_t genome = {0};
 
     // Create a simple creature with 3 nodes and 2 links
-    genome.node_count = 5;
-    for (uint32_t i = 0; i < 5; i++) {
-        genome.nodes[i].offset = (vec2_t){(float)i * 0.8f - 1.6f, (float)i * 0.8f + 1.6f};
+    genome.node_count = 3;
+    vec2_t offsets[] = {
+        (vec2_t){0, 0},
+        (vec2_t){5, 3},
+        (vec2_t){5, -3},
+    };
+    for (uint32_t i = 0; i < 3; i++) {
+        genome.nodes[i].offset = offsets[i];
         genome.nodes[i].radius = 5.0f;
         genome.nodes[i].invmass = 1.0f;
     }
 
     uint32_t k = 0;
 
-    for (uint32_t i = 0; i + 1 < 5; i++) {
+    for (uint32_t i = 0; i + 1 < 3; i++) {
         genome.links[k] = (gene_link_t){
             .a = i,
             .b = i + 1,
@@ -24,7 +29,7 @@ static genome_t create_sample_genome(float amplitude, float freq) {
         k++;
     }
 
-    for (uint32_t i = 0; i + 2 < 5; i++) {
+    for (uint32_t i = 0; i + 2 < 3; i++) {
         genome.links[k] = (gene_link_t){
             .a = i,
             .b = i + 2,
@@ -56,12 +61,10 @@ void init_simulator(simulator_t *sim) {
     pool_init(&(sim->creature_pool), sizeof(creature_t), MAX_CREATURES);
     joint_pool_init(&(sim->joint_pool), MAX_ENTITIES);
 
-    genome_t sample = create_sample_genome(0.35f, 1.5f);
+    genome_t sample = create_sample_genome(0.5f, 0.5f);
     entity_t e = spawn_creature(sim, &sample, (vec2_t){0.0f, 0.0f});
     if (e.id == NULL_ENTITY.id) {
         LOG("[ERROR] Failed to spawn sample creature\n");
-    } else {
-        LOG("INFO: Sample creature spawned with entity ID: %u\n", e.id);
     }
     
     // Window and graphics initialization
