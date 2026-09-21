@@ -15,6 +15,7 @@ SRCS	=	src/main.c \
 			src/engine/input.c \
 			src/entities/ball.c \
 			src/entities/creature.c \
+			src/ui/textbox.c \
 
 LIBS	=	-Iinclude -lm -lcsfml-system -lcsfml-window -lcsfml-graphics
 

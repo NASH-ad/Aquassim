@@ -7,6 +7,8 @@
     #include "ecs.h"
     #include <SFML/Graphics.h>
     #include "creature.h"
+    #include "textbox.h"
+    #include <string.h>
 
 
 typedef struct part_of { entity_t creature; } part_of_t;
@@ -21,6 +23,10 @@ typedef struct alt_simulator {
     sfRenderWindow *window;
     sfVideoMode mode;
     sfView *view;
+    sfText *text;
+    sfFont *font;
+    textbox_t sim_infos;
+    textbox_t creature_infos;
     sfSprite *background;
     sfTexture *background_texture;
     entity_manager_t creature_manager;

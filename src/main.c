@@ -12,7 +12,7 @@ int main(void) {
     init_simulator(&sim);
     sfEvent event;
 
-    //int frame = 0;
+    int frame = 0;
 
     while (sfRenderWindow_isOpen(sim.window)) {
         while (sfRenderWindow_pollEvent(sim.window, &event)) {
@@ -24,8 +24,20 @@ int main(void) {
         sim.time = sfSeconds(sim.delta_time + sfTime_asSeconds(sim.time));
         handle_input(&sim);
         
-        //frame++;
-        
+        char buff[512] = {0};
+        snprintf(buff, sizeof(buff), "Time: %.2f s\nDelta Time: %.4f s\nFrame: %d",
+            sfTime_asSeconds(sim.time), sim.delta_time, frame);
+        textbox_set_content(&(sim.sim_infos), buff);
+
+        vec2_t creature_vel = VEC2_NULL;
+        creature_t *creature = (creature_t *)pool_get(&(sim.creature_pool), 0);
+        for (uint32_t i = 0; i < creature->mass_count; i++) {
+            vec2_t *vel = (vec2_t *)pool_get(&(sim.velocity_pool), creature->masses[i].id);
+            creature_vel = vec2_add(creature_vel, *vel);
+        }
+        snprintf(buff, sizeof(buff), "Creature Velocity: (%.2f, %.2f) units/s",
+            creature_vel.x, creature_vel.y);
+        textbox_set_content(&(sim.creature_infos), buff);
 
         // Update simulation
         system_muscle(&(sim.mass_manager), &(sim.joint_pool), sfTime_asSeconds(sim.time));
@@ -44,7 +56,12 @@ int main(void) {
         system_draw_joints(&sim, sim.window, pixels_per_unit);
         system_draw_circles(&(sim.radius_pool), &(sim.position_pool), sim.circle, sim.window, pixels_per_unit);
 
+        // Render UI
+        textbox_display(sim.window, &(sim.sim_infos));
+        textbox_display(sim.window, &(sim.creature_infos));
+
         sfRenderWindow_display(sim.window);
+        frame++;
     }
 
     // Ressource cleaning

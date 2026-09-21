@@ -12,7 +12,7 @@ static genome_t create_sample_genome(float amplitude, float freq) {
     };
     for (uint32_t i = 0; i < 3; i++) {
         genome.nodes[i].offset = offsets[i];
-        genome.nodes[i].radius = 5.0f;
+        genome.nodes[i].radius = 10.0f;
         genome.nodes[i].invmass = 1.0f;
     }
 
@@ -84,4 +84,10 @@ void init_simulator(simulator_t *sim) {
     sim->background_texture = sfTexture_createFromFile("assets/Background.png", NULL);
     sfSprite_setTexture(sim->background, sim->background_texture, sfTrue);
     sfSprite_setPosition(sim->background, (sfVector2f){-(float)sim->mode.width / 2.0f, -(float)sim->mode.height / 2.0f});
+
+    // UI 
+    sim->text = sfText_create();
+    sim->font = sfFont_createFromFile("fonts/nunito/Nunito-Medium.ttf");
+    sim->sim_infos = textbox_create(sim->text, sim->font, (vec2_t){10.0f, 10.0f}, sfWhite, 24);
+    sim->creature_infos = textbox_create(sim->text, sim->font, (vec2_t){10.0f, 150.0f}, sfWhite, 18);
 }

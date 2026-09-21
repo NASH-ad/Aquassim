@@ -79,6 +79,7 @@ entity_t spawn_creature(simulator_t *sim, const genome_t *genome, vec2_t origin)
         float *invmass = NULL;
         vec2_t *pos = NULL;
         part_of_t *part_of = NULL;
+        vec2_t *vel = NULL;
         
         if (mass_entity.id == NULL_ENTITY.id) {
             continue;
@@ -86,6 +87,7 @@ entity_t spawn_creature(simulator_t *sim, const genome_t *genome, vec2_t origin)
         radius = (float *)pool_add(&(sim->radius_pool), mass_entity.id);
         invmass = (float *)pool_add(&(sim->invmass_pool), mass_entity.id);
         pos = (vec2_t *)pool_add(&(sim->position_pool), mass_entity.id);
+        vel = (vec2_t *)pool_add(&(sim->velocity_pool), mass_entity.id);
         part_of = (part_of_t *)pool_add(&(sim->part_of_pool), mass_entity.id);
         if (!radius || !invmass || !pos || !part_of) {
             LOG("[ERROR] Failed to allocate component for mass entity\n");
@@ -95,6 +97,7 @@ entity_t spawn_creature(simulator_t *sim, const genome_t *genome, vec2_t origin)
         *radius = node->radius;
         *invmass = node->invmass;
         *pos = vec2_add(origin, node->offset);
+        *vel = VEC2_NULL;
         creature->masses[creature->mass_count] = mass_entity;
         creature->mass_count++;
         *part_of = (part_of_t){.creature = creature_entity};
