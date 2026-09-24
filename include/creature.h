@@ -25,6 +25,7 @@ typedef struct {
     float phase;
 } gene_link_t;
 
+// The genome store all datas used to build a specific creature
 typedef struct {
     gene_node_t nodes[MAX_MASSES_PER_CREATURE]; // Array of nodes (masses) in the creature's genome
     uint32_t node_count;

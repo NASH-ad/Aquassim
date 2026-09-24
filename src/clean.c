@@ -24,6 +24,7 @@ void cleanup_simulator(simulator_t *sim) {
     sfFont_destroy(sim->font);
     sfText_destroy(sim->text);
     
+    // Window
     sfRenderWindow_destroy(sim->window);
     sfView_destroy(sim->view);
 }

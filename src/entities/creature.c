@@ -3,8 +3,12 @@
 #include "aquassim.h"
 
 /*
+-------------------------------------
 ------- Joint pool handling ---------
+-------------------------------------
 */
+
+// Allocate memory for the internal array of joint_pool
 void joint_pool_init(joint_pool_t *pool, uint32_t capacity) {
     pool->data = (joint_t *)malloc(sizeof(joint_t) * capacity);
     if (!pool->data) {
@@ -17,6 +21,7 @@ void joint_pool_init(joint_pool_t *pool, uint32_t capacity) {
     pool->capacity = capacity;
 }
 
+// Add a new joint and return the pointer to set its properties
 joint_t *joint_pool_add(joint_pool_t *pool) {
     if (pool->count >= pool->capacity) {
         LOG("[ERROR] Joint pool is full, cannot add more joints\n");
@@ -27,6 +32,8 @@ joint_t *joint_pool_add(joint_pool_t *pool) {
     return joint;
 }
 
+
+// Remove a joint; doesn't free any memory
 void joint_pool_remove(joint_pool_t *pool, entity_t creature) {
     for (uint32_t i = 0; i < pool->count; i++) {
         if (pool->data[i].creature.id == creature.id) {
@@ -38,6 +45,7 @@ void joint_pool_remove(joint_pool_t *pool, entity_t creature) {
     }
 }
 
+// free the pool's memory
 void joint_pool_destroy(joint_pool_t *pool) {
     if (pool->data) {
         free(pool->data);
@@ -48,8 +56,13 @@ void joint_pool_destroy(joint_pool_t *pool) {
 }
 
 /*
+------------------------------------
 -------- Creature spawning ---------
+------------------------------------
 */
+
+// Build a creature basing on the given genome and relative coordinatte system origin
+// A creature is a collection of masses (articulations) and joints (members and muscles)
 entity_t spawn_creature(simulator_t *sim, const genome_t *genome, vec2_t origin) {
     creature_t *creature = NULL;
     entity_t creature_entity = em_create(&(sim->creature_manager));
@@ -137,6 +150,8 @@ entity_t spawn_creature(simulator_t *sim, const genome_t *genome, vec2_t origin)
     return creature_entity;
 }
 
+
+// The centroid is the creature's center of mass
 vec2_t creature_centroid(creature_t *creature, pool_t *position_pool) {
     vec2_t centroid = (vec2_t){0.0f, 0.0f};
     uint32_t count = 0;
