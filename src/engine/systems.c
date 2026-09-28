@@ -116,8 +116,48 @@ void system_purge_joints(simulator_t *sim) {
     }
 }
 
+// Per-mass accumulators used by the order-independent (Jacobi) joint systems, indexed by entity id
+static vec2_t joint_accum[MAX_ENTITIES];
+static uint32_t joint_accum_count[MAX_ENTITIES];
+
+static void joint_accum_reset(joint_pool_t *pool) {
+    for (uint32_t i = 0; i < pool->count; i++) {
+        joint_accum[pool->data[i].m_a.id] = VEC2_NULL;
+        joint_accum[pool->data[i].m_b.id] = VEC2_NULL;
+        joint_accum_count[pool->data[i].m_a.id] = 0;
+        joint_accum_count[pool->data[i].m_b.id] = 0;
+    }
+}
+
+static void joint_accum_add(entity_t mass, vec2_t delta) {
+    joint_accum[mass.id] = vec2_add(joint_accum[mass.id], delta);
+    joint_accum_count[mass.id]++;
+}
+
+// Apply each mass's accumulated delta once, averaged over the joints that touched it if requested
+static void joint_accum_apply(joint_pool_t *pool, pool_t *target_pool, bool average) {
+    for (uint32_t i = 0; i < pool->count; i++) {
+        entity_t masses[2] = {pool->data[i].m_a, pool->data[i].m_b};
+
+        for (int k = 0; k < 2; k++) {
+            uint32_t id = masses[k].id;
+            vec2_t *target = (vec2_t *)pool_get(target_pool, id);
+            if (!target || joint_accum_count[id] == 0) {
+                continue;
+            }
+            float scale = average ? 1.0f / (float)joint_accum_count[id] : 1.0f;
+            *target = vec2_add(*target, vec2_scale(joint_accum[id], scale));
+            joint_accum_count[id] = 0; // Mark as applied so a mass shared by several joints is only moved once
+        }
+    }
+}
+
+// Joints are solved Jacobi-style: every correction is computed from the same positions, then applied
+// together. Updating positions in place (Gauss-Seidel) makes the result depend on the joint order,
+// which makes symmetric creatures drift sideways.
 void system_solve_joints(simulator_t *sim, int iters) {
     for (int it =0; it < iters; it++) {
+        joint_accum_reset(&(sim->joint_pool));
         for (uint32_t i = 0; i < sim->joint_pool.count; i++) {
             joint_t *joint = &(sim->joint_pool.data[i]);
             if (!em_alive(&(sim->mass_manager), joint->m_a) || !em_alive(&(sim->mass_manager), joint->m_b)) {
@@ -138,9 +178,10 @@ void system_solve_joints(simulator_t *sim, int iters) {
             }
             vec2_t dir = vec2_scale(delta, 1.0f / dist);
             vec2_t correction = vec2_scale(dir, (dist - joint->current_rest) / wsum);
-            *pos_a = vec2_add(*pos_a, vec2_scale(correction, *invmass_a));
-            *pos_b = vec2_sub(*pos_b, vec2_scale(correction, *invmass_b));
+            joint_accum_add(joint->m_a, vec2_scale(correction, *invmass_a));
+            joint_accum_add(joint->m_b, vec2_scale(correction, -*invmass_b));
         }
+        joint_accum_apply(&(sim->joint_pool), &(sim->position_pool), true);
     }
 }
 
@@ -175,9 +216,12 @@ void system_fitness(simulator_t *sim) {
     }
 }
 
+// Drag is computed from the velocities at the start of the step and applied afterwards,
+// so the result doesn't depend on the joint order (see system_solve_joints)
 void system_drag(simulator_t *sim, float Cn, float Ct) {
     joint_t *joint = NULL;
 
+    joint_accum_reset(&(sim->joint_pool));
     for (uint32_t i = 0; i < sim->joint_pool.count; i++) {
         joint = &(sim->joint_pool.data[i]);
         if (!em_alive(&(sim->mass_manager), joint->m_a) || !em_alive(&(sim->mass_manager), joint->m_b)
@@ -216,7 +260,8 @@ void system_drag(simulator_t *sim, float Cn, float Ct) {
         float vt_new = v_tangential / (1.0f + kt * (*invmass_a + *invmass_b) * sim->delta_time);
 
         vec2_t dv = vec2_add(vec2_scale(normal, vn_new - v_normal), vec2_scale(tangential, vt_new - v_tangential));
-        *vel_a = vec2_add(*vel_a, dv);
-        *vel_b = vec2_add(*vel_b, dv);
+        joint_accum_add(joint->m_a, dv);
+        joint_accum_add(joint->m_b, dv);
     }
+    joint_accum_apply(&(sim->joint_pool), &(sim->velocity_pool), false); // Drag forces add up
 }
