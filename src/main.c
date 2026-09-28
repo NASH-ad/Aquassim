@@ -16,6 +16,9 @@ int main(void) {
     }
     init_simulator(sim);
     sfEvent event;
+    screenshot_plan_t screenshot_plan;
+    screenshot_plan_load(&screenshot_plan);
+    bool screenshot_requested = false;
 
     int frame = 0;
 
@@ -23,6 +26,9 @@ int main(void) {
         while (sfRenderWindow_pollEvent(sim->window, &event)) {
             if (event.type == sfEvtClosed) {
                 sfRenderWindow_close(sim->window);
+            }
+            if (event.type == sfEvtKeyPressed && event.key.code == sfKeyF12) {
+                screenshot_requested = true;
             }
         }
         sim->delta_time = sfTime_asSeconds(sfClock_restart(sim->clock));
@@ -51,6 +57,7 @@ int main(void) {
         // Update simulation
         system_muscle(&(sim->mass_manager), &(sim->joint_pool), sfTime_asSeconds(sim->time));
         system_drag(sim, 6.0f, 0.15f);
+        system_jet(sim, 2.0f, 0.3f);
         system_purge_joints(sim);
         system_integrate(sim);
         system_solve_joints(sim, 8);
@@ -69,7 +76,15 @@ int main(void) {
         textbox_display(sim->window, &(sim->sim_infos));
         textbox_display(sim->window, &(sim->creature_infos));
 
+        // Screenshots must be taken before display, while the back buffer holds the frame
+        if (screenshot_requested || screenshot_plan_should_capture(&screenshot_plan, frame)) {
+            screenshot_save(sim->window, frame);
+            screenshot_requested = false;
+        }
         sfRenderWindow_display(sim->window);
+        if (screenshot_plan_done(&screenshot_plan)) {
+            sfRenderWindow_close(sim->window);
+        }
         frame++;
     }
 

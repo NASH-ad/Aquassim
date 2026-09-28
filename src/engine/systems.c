@@ -265,3 +265,72 @@ void system_drag(simulator_t *sim, float Cn, float Ct) {
     }
     joint_accum_apply(&(sim->joint_pool), &(sim->velocity_pool), false); // Drag forces add up
 }
+
+// JET PROPULSION SYSTEM
+// A contracting muscle squeezes water out of the creature, and the creature is pushed the other way.
+// Water leaves along the muscle's normal, on the side facing away from the creature's centroid.
+// Thrust grows with the square of the contraction speed: F = C_jet * rest_length * L'^2.
+// When the muscle relaxes, water is drawn back in through a wider opening, giving a weaker
+// force in the opposite direction, scaled by refill_ratio.
+void system_jet(simulator_t *sim, float C_jet, float refill_ratio) {
+    joint_t *joint = NULL;
+
+    joint_accum_reset(&(sim->joint_pool));
+    for (uint32_t i = 0; i < sim->joint_pool.count; i++) {
+        joint = &(sim->joint_pool.data[i]);
+        if (!em_alive(&(sim->mass_manager), joint->m_a) || !em_alive(&(sim->mass_manager), joint->m_b)
+            || !joint->is_muscle) {
+            continue;
+        }
+
+        creature_t *creature = (creature_t *)pool_get(&(sim->creature_pool), joint->creature.id);
+        vec2_t *pos_a = (vec2_t *)pool_get(&(sim->position_pool), joint->m_a.id);
+        vec2_t *pos_b = (vec2_t *)pool_get(&(sim->position_pool), joint->m_b.id);
+        vec2_t *vel_a = (vec2_t *)pool_get(&(sim->velocity_pool), joint->m_a.id);
+        vec2_t *vel_b = (vec2_t *)pool_get(&(sim->velocity_pool), joint->m_b.id);
+        float *invmass_a = (float *)pool_get(&(sim->invmass_pool), joint->m_a.id);
+        float *invmass_b = (float *)pool_get(&(sim->invmass_pool), joint->m_b.id);
+
+        if (!creature || !pos_a || !pos_b || !vel_a || !vel_b || !invmass_a || !invmass_b) {
+            continue;
+        }
+
+        vec2_t axis = vec2_sub(*pos_b, *pos_a);
+        float length = vec2_length(axis);
+        if (length < 1e-6f) {
+            continue;
+        }
+        vec2_t tangential = vec2_scale(axis, 1.0f / length);
+
+        // Contraction speed: negative when the muscle shortens
+        float length_rate = vec2_dot(vec2_sub(*vel_b, *vel_a), tangential);
+        if (length_rate == 0.0f) {
+            continue;
+        }
+
+        // Outward normal: the side of the muscle facing away from the centroid.
+        // Undefined when the centroid lies on the muscle's line, so no jet in that case.
+        vec2_t normal = (vec2_t){-tangential.y, tangential.x};
+        vec2_t middle = vec2_scale(vec2_add(*pos_a, *pos_b), 0.5f);
+        float side = vec2_dot(vec2_sub(middle, creature_centroid(creature, &(sim->position_pool))), normal);
+        if (fabsf(side) < 1e-6f) {
+            continue;
+        }
+        vec2_t outward = (side > 0.0f) ? normal : vec2_scale(normal, -1.0f);
+
+        // Contraction ejects water outward and pushes the creature inward; refilling does the opposite, weaker
+        float force = C_jet * joint->rest_length * length_rate * length_rate;
+        vec2_t direction = outward;
+        if (length_rate < 0.0f) {
+            direction = vec2_scale(outward, -1.0f);
+        } else {
+            force *= refill_ratio;
+        }
+
+        // Each mass takes half of the force
+        vec2_t impulse = vec2_scale(direction, 0.5f * force * sim->delta_time);
+        joint_accum_add(joint->m_a, vec2_scale(impulse, *invmass_a));
+        joint_accum_add(joint->m_b, vec2_scale(impulse, *invmass_b));
+    }
+    joint_accum_apply(&(sim->joint_pool), &(sim->velocity_pool), false); // Jet forces add up
+}

@@ -8,6 +8,7 @@
     #include <SFML/Graphics.h>
     #include "creature.h"
     #include "textbox.h"
+    #include "screenshot.h"
     #include <string.h>
 
 
@@ -55,6 +56,7 @@ void system_solve_joints(simulator_t *sim, int iters);
 void system_derive_velocity(simulator_t *sim);
 void system_fitness(simulator_t *sim);
 void system_drag(simulator_t *sim, float Cn, float Ct);
+void system_jet(simulator_t *sim, float C_jet, float refill_ratio);
 
 // Utils
 void handle_input(simulator_t *sim);
