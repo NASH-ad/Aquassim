@@ -3,6 +3,7 @@
 
     #include "ecs.h"
     #include "vector.h"
+    #include "gait.h"
 
     #define MAX_MASSES_PER_CREATURE 20u
     #define MAX_JOINTS_PER_CREATURE 20u
@@ -19,10 +20,7 @@ typedef struct {
 typedef struct {
     uint32_t a;
     uint32_t b;
-    bool is_muscle;
-    float amplitude;
-    float frequency;
-    float phase;
+    bool is_muscle; // Muscles are driven by the genome's gait, in their order of declaration
 } gene_link_t;
 
 // The genome store all datas used to build a specific creature
@@ -31,6 +29,7 @@ typedef struct {
     uint32_t node_count;
     gene_link_t links[MAX_JOINTS_PER_CREATURE]; // Array of links (joints) in the creature's genome
     uint32_t link_count;
+    gait_t gait; // Muscle controller: one column of targets per muscle
 } genome_t;
 
 // A creature is a collection of masses and joints that can move and interact with the environment.
@@ -51,9 +50,7 @@ typedef struct {
     float rest_length; // Rest length of the joint
     float current_rest;
     bool is_muscle; // Flag to indicate if the joint is a muscle
-    float amplitude;  // Amplitude of the muscle contraction
-    float frequency; // Frequency of the muscle contraction
-    float phase;    // Phase of the muscle contraction
+    uint32_t muscle_id; // Index of the muscle among the creature's muscles, i.e. its column in the gait
 } joint_t;
 
 // A joint is a link between two masses, it can act as a simple member or a muscle.

@@ -83,19 +83,26 @@ void system_draw_joints(simulator_t *sim, sfRenderWindow *window, int pixels_per
 //-------- Systems for creature management ---------
 //————————————————————————————————————————————————————
 
-// This systems update the length of the muscles to simulate contraction and relaxation over time.
-void system_muscle(entity_manager_t *mass_manager, joint_pool_t *pool, float time) {
+// MUSCLE SYSTEM
+// Each creature's clock reads its gait (table of poses) and sets the length every muscle aims for.
+// The target is written into the muscle's rest length; the joint solver then moves the masses.
+void system_muscle(simulator_t *sim) {
+    float time = sfTime_asSeconds(sim->time);
     joint_t *joint = NULL;
-    float s = 0.0f;
 
-    for (uint32_t i = 0; i < pool->count; i++) {
-        joint = &(pool->data[i]);
-        
-        if (!em_alive(mass_manager, joint->m_a) || !em_alive(mass_manager, joint->m_b) || !joint->is_muscle) {
+    for (uint32_t i = 0; i < sim->joint_pool.count; i++) {
+        joint = &(sim->joint_pool.data[i]);
+
+        if (!em_alive(&(sim->mass_manager), joint->m_a) || !em_alive(&(sim->mass_manager), joint->m_b)
+            || !joint->is_muscle || !em_alive(&(sim->creature_manager), joint->creature)) {
             continue;
         }
-        s = sinf(2 * M_PI * joint->frequency * time + joint->phase);
-        joint->current_rest = joint->rest_length * (1.0f + joint->amplitude * s);
+        creature_t *creature = (creature_t *)pool_get(&(sim->creature_pool), joint->creature.id);
+        if (!creature) {
+            continue;
+        }
+        const gait_t *gait = &(creature->genome.gait);
+        joint->current_rest = joint->rest_length * gait_sample(gait, joint->muscle_id, gait_phase(gait, time));
     }
 }
 

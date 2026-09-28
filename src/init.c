@@ -1,9 +1,9 @@
 #include "simulator.h"
 
-static genome_t create_sample_genome(float amplitude, float freq) {
+static genome_t create_sample_genome(void) {
     genome_t genome = {0};
 
-    // Create a simple creature with 3 nodes and 2 links
+    // Create a simple creature with 3 nodes, 2 bones and 1 muscle
     genome.node_count = 3;
     vec2_t offsets[] = {
         (vec2_t){0, 0},
@@ -19,27 +19,24 @@ static genome_t create_sample_genome(float amplitude, float freq) {
     uint32_t k = 0;
 
     for (uint32_t i = 0; i + 1 < 3; i++) {
-        genome.links[k] = (gene_link_t){
-            .a = i,
-            .b = i + 1,
-            .is_muscle = false,
-            .amplitude = 0,
-            .frequency = 0,
-            .phase = 0.0f};
+        genome.links[k] = (gene_link_t){.a = i, .b = i + 1, .is_muscle = false};
         k++;
     }
 
     for (uint32_t i = 0; i + 2 < 3; i++) {
-        genome.links[k] = (gene_link_t){
-            .a = i,
-            .b = i + 2,
-            .is_muscle = true,
-            .amplitude = amplitude,
-            .frequency = freq,
-            .phase = (float)i * 1.6f};
+        genome.links[k] = (gene_link_t){.a = i, .b = i + 2, .is_muscle = true};
         k++;
     }
     genome.link_count = k;
+
+    // Asymmetric stroke: the muscle closes fast (first quarter of the cycle) and reopens slowly
+    const float stroke[] = {1.0f, 0.6f, 0.75f, 0.9f};
+    genome.gait.period = 2.0f;
+    genome.gait.clock_offset = 0.0f;
+    genome.gait.n_frames = 4;
+    for (uint32_t f = 0; f < genome.gait.n_frames; f++) {
+        genome.gait.targets[f][0] = stroke[f];
+    }
     return genome;
 }
 
@@ -61,7 +58,7 @@ void init_simulator(simulator_t *sim) {
     pool_init(&(sim->creature_pool), sizeof(creature_t), MAX_CREATURES);
     joint_pool_init(&(sim->joint_pool), MAX_ENTITIES);
 
-    genome_t sample = create_sample_genome(0.5f, 0.5f);
+    genome_t sample = create_sample_genome();
     entity_t e = spawn_creature(sim, &sample, (vec2_t){0.0f, 0.0f});
     if (e.id == NULL_ENTITY.id) {
         LOG("[ERROR] Failed to spawn sample creature\n");

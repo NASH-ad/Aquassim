@@ -55,7 +55,7 @@ int main(void) {
         }
 
         // Update simulation
-        system_muscle(&(sim->mass_manager), &(sim->joint_pool), sfTime_asSeconds(sim->time));
+        system_muscle(sim);
         system_drag(sim, 6.0f, 0.15f);
         system_jet(sim, 2.0f, 0.3f);
         system_purge_joints(sim);

@@ -131,10 +131,13 @@ entity_t spawn_creature(simulator_t *sim, const genome_t *genome, vec2_t origin)
     }
 
     // Initialize the creature's joint pool
+    uint32_t muscle_count = 0;
     for (uint32_t i = 0; i < genome->link_count; i++) {
         const gene_link_t *link = &(genome->links[i]);
         joint_t *joint = NULL;
         float rest_length = 0.0f;
+        // Counted before any check so a muscle keeps its gait column even if an earlier link is skipped
+        uint32_t muscle_id = link->is_muscle ? muscle_count++ : 0;
 
         // A mass may have failed to spawn, leaving fewer masses than genome nodes
         if (link->a >= creature->mass_count || link->b >= creature->mass_count) {
@@ -161,9 +164,7 @@ entity_t spawn_creature(simulator_t *sim, const genome_t *genome, vec2_t origin)
         joint->rest_length = rest_length;
         joint->current_rest = rest_length;
         joint->is_muscle = link->is_muscle;
-        joint->amplitude = link->amplitude;
-        joint->frequency = link->frequency;
-        joint->phase = link->phase;
+        joint->muscle_id = muscle_id;
     }
 
     return creature_entity;

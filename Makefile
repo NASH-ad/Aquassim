@@ -15,6 +15,7 @@ SRCS	=	src/main.c \
 			src/engine/input.c \
 			src/entities/ball.c \
 			src/entities/creature.c \
+			src/entities/gait.c \
 			src/ui/textbox.c \
 			src/ui/screenshot.c \
 
