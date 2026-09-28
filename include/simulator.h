@@ -46,7 +46,6 @@ void cleanup_simulator(simulator_t *sim);
 
 // Systems functions
 void system_integrate(simulator_t *sim);
-void system_resolve_collision(pool_t *radius_pool, pool_t *position_pool, pool_t *velocity_pool, pool_t *invmass_pool, float restitution, float friction);
 void system_draw_circles(pool_t *radius_pool, pool_t *position_pool, sfCircleShape *circle, sfRenderWindow *window, int pixels_per_unit);
 void system_draw_joints(simulator_t *sim, sfRenderWindow *window, int pixels_per_unit);
 

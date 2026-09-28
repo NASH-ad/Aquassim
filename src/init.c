@@ -12,7 +12,7 @@ static genome_t create_sample_genome(float amplitude, float freq) {
     };
     for (uint32_t i = 0; i < 3; i++) {
         genome.nodes[i].offset = offsets[i];
-        genome.nodes[i].radius = 10.0f;
+        genome.nodes[i].radius = 0.5f; // In world units
         genome.nodes[i].invmass = 1.0f;
     }
 

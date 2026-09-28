@@ -22,6 +22,9 @@ entity_t em_create(entity_manager_t *em) {
         e.id = em->free_ids[em->free_count - 1];
         em->free_count--;
     } else {
+        if (em->first_unused_id >= MAX_ENTITIES) {
+            return NULL_ENTITY; // No more ids available
+        }
         e.id = em->first_unused_id;
         em->first_unused_id += 1;
     }

@@ -33,15 +33,18 @@ joint_t *joint_pool_add(joint_pool_t *pool) {
 }
 
 
-// Remove a joint; doesn't free any memory
+// Remove every joint belonging to the given creature; doesn't free any memory
 void joint_pool_remove(joint_pool_t *pool, entity_t creature) {
-    for (uint32_t i = 0; i < pool->count; i++) {
-        if (pool->data[i].creature.id == creature.id) {
+    uint32_t i = 0;
+
+    while (i < pool->count) {
+        if (entity_equal(pool->data[i].creature, creature)) {
             // Move the last joint to the current position to fill the gap
             pool->data[i] = pool->data[pool->count - 1];
             pool->count--;
-            return;
+            continue; // Do not increment i, as we need to check the new joint at index i
         }
+        i++;
     }
 }
 
@@ -91,25 +94,36 @@ entity_t spawn_creature(simulator_t *sim, const genome_t *genome, vec2_t origin)
         float *radius = NULL;
         float *invmass = NULL;
         vec2_t *pos = NULL;
+        vec2_t *prev_pos = NULL;
         part_of_t *part_of = NULL;
         vec2_t *vel = NULL;
-        
+
         if (mass_entity.id == NULL_ENTITY.id) {
+            LOG("[ERROR] Failed to create mass entity\n");
             continue;
         }
         radius = (float *)pool_add(&(sim->radius_pool), mass_entity.id);
         invmass = (float *)pool_add(&(sim->invmass_pool), mass_entity.id);
         pos = (vec2_t *)pool_add(&(sim->position_pool), mass_entity.id);
+        prev_pos = (vec2_t *)pool_add(&(sim->prev_pos_pool), mass_entity.id);
         vel = (vec2_t *)pool_add(&(sim->velocity_pool), mass_entity.id);
         part_of = (part_of_t *)pool_add(&(sim->part_of_pool), mass_entity.id);
-        if (!radius || !invmass || !pos || !part_of) {
+        if (!radius || !invmass || !pos || !prev_pos || !vel || !part_of) {
             LOG("[ERROR] Failed to allocate component for mass entity\n");
+            // Remove the components that were added so no orphan is left behind
+            pool_remove(&(sim->radius_pool), mass_entity.id);
+            pool_remove(&(sim->invmass_pool), mass_entity.id);
+            pool_remove(&(sim->position_pool), mass_entity.id);
+            pool_remove(&(sim->prev_pos_pool), mass_entity.id);
+            pool_remove(&(sim->velocity_pool), mass_entity.id);
+            pool_remove(&(sim->part_of_pool), mass_entity.id);
             em_destroy(&(sim->mass_manager), mass_entity);
             continue;
         }
         *radius = node->radius;
         *invmass = node->invmass;
         *pos = vec2_add(origin, node->offset);
+        *prev_pos = *pos;
         *vel = VEC2_NULL;
         creature->masses[creature->mass_count] = mass_entity;
         creature->mass_count++;
@@ -119,15 +133,20 @@ entity_t spawn_creature(simulator_t *sim, const genome_t *genome, vec2_t origin)
     // Initialize the creature's joint pool
     for (uint32_t i = 0; i < genome->link_count; i++) {
         const gene_link_t *link = &(genome->links[i]);
+        joint_t *joint = NULL;
+        float rest_length = 0.0f;
+
+        // A mass may have failed to spawn, leaving fewer masses than genome nodes
+        if (link->a >= creature->mass_count || link->b >= creature->mass_count) {
+            LOG("[ERROR] Invalid mass entity for joint\n");
+            continue;
+        }
         entity_t a = creature->masses[link->a];
         entity_t b = creature->masses[link->b];
-        joint_t *joint = NULL;
         vec2_t *pos_a = (vec2_t *)pool_get(&(sim->position_pool), a.id);
         vec2_t *pos_b = (vec2_t *)pool_get(&(sim->position_pool), b.id);
-        float rest_length = 0.0f;
-        
-        if (a.id == NULL_ENTITY.id || b.id == NULL_ENTITY.id) {
-            LOG("[ERROR] Invalid mass entity for joint\n");
+        if (!pos_a || !pos_b) {
+            LOG("[ERROR] Missing position for joint masses\n");
             continue;
         }
         rest_length = vec2_length(vec2_sub(*pos_a, *pos_b));

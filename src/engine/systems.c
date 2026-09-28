@@ -11,9 +11,9 @@ This function iterates over all entities in the position and velocity pools, upd
 void system_integrate(simulator_t *sim) {
     for (uint32_t i = 0; i < sim->position_pool.count; i++) {
         uint32_t entity_index = sim->position_pool.dense_set[i];
-        vec2_t *pos = (vec2_t *)pool_at(&(sim->position_pool), entity_index);
-        vec2_t *vel = (vec2_t *)pool_at(&(sim->velocity_pool), entity_index);
-        vec2_t *prev_pos = (vec2_t *)pool_at(&(sim->prev_pos_pool), entity_index);
+        vec2_t *pos = (vec2_t *)pool_at(&(sim->position_pool), i);
+        vec2_t *vel = (vec2_t *)pool_get(&(sim->velocity_pool), entity_index);
+        vec2_t *prev_pos = (vec2_t *)pool_get(&(sim->prev_pos_pool), entity_index);
         if (!pos || !vel || !prev_pos) {
             continue;
         }
@@ -37,8 +37,10 @@ void system_draw_circles(pool_t *radius_pool, pool_t *position_pool, sfCircleSha
             continue; // Skip if any component is missing
         }
 
-        sfCircleShape_setRadius(circle, (*radius));
-        sfCircleShape_setOrigin(circle, (sfVector2f){(*radius) / 2.0f, (*radius) / 2.0f});
+        // Radius is in world units; the origin is set to the center so the circle is centered on the mass
+        float radius_px = (*radius) * pixels_per_unit;
+        sfCircleShape_setRadius(circle, radius_px);
+        sfCircleShape_setOrigin(circle, (sfVector2f){radius_px, radius_px});
         sfCircleShape_setPosition(circle, (sfVector2f){position->x * pixels_per_unit, position->y * pixels_per_unit});
         sfRenderWindow_drawCircleShape(window, circle, NULL);
     }
@@ -143,6 +145,9 @@ void system_solve_joints(simulator_t *sim, int iters) {
 }
 
 void system_derive_velocity(simulator_t *sim) {
+    if (sim->delta_time <= 0.0f) {
+        return;
+    }
     float inv_dt = 1.0f / sim->delta_time;
 
     for (uint32_t i = 0; i < sim->position_pool.count; i++) {

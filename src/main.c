@@ -8,63 +8,73 @@
 
 int main(void) {
     const int pixels_per_unit = 50;
-    simulator_t sim = {0};
-    init_simulator(&sim);
+    // Allocated on the heap: the component pools' sparse sets make simulator_t over 1 MB
+    simulator_t *sim = calloc(1, sizeof(simulator_t));
+    if (!sim) {
+        LOG("[ERROR] Failed to allocate memory for the simulator\n");
+        return EXIT_FAILURE;
+    }
+    init_simulator(sim);
     sfEvent event;
 
     int frame = 0;
 
-    while (sfRenderWindow_isOpen(sim.window)) {
-        while (sfRenderWindow_pollEvent(sim.window, &event)) {
+    while (sfRenderWindow_isOpen(sim->window)) {
+        while (sfRenderWindow_pollEvent(sim->window, &event)) {
             if (event.type == sfEvtClosed) {
-                sfRenderWindow_close(sim.window);
+                sfRenderWindow_close(sim->window);
             }
         }
-        sim.delta_time = sfTime_asSeconds(sfClock_restart(sim.clock));
-        sim.time = sfSeconds(sim.delta_time + sfTime_asSeconds(sim.time));
-        handle_input(&sim);
-        
+        sim->delta_time = sfTime_asSeconds(sfClock_restart(sim->clock));
+        sim->time = sfSeconds(sim->delta_time + sfTime_asSeconds(sim->time));
+        handle_input(sim);
+
         char buff[512] = {0};
         snprintf(buff, sizeof(buff), "Time: %.2f s\nDelta Time: %.4f s\nFrame: %d",
-            sfTime_asSeconds(sim.time), sim.delta_time, frame);
-        textbox_set_content(&(sim.sim_infos), buff);
+            sfTime_asSeconds(sim->time), sim->delta_time, frame);
+        textbox_set_content(&(sim->sim_infos), buff);
 
-        vec2_t creature_vel = VEC2_NULL;
-        creature_t *creature = (creature_t *)pool_get(&(sim.creature_pool), 0);
-        for (uint32_t i = 0; i < creature->mass_count; i++) {
-            vec2_t *vel = (vec2_t *)pool_get(&(sim.velocity_pool), creature->masses[i].id);
-            creature_vel = vec2_add(creature_vel, *vel);
+        creature_t *creature = (creature_t *)pool_at(&(sim->creature_pool), 0);
+        if (creature) {
+            vec2_t creature_vel = VEC2_NULL;
+            for (uint32_t i = 0; i < creature->mass_count; i++) {
+                vec2_t *vel = (vec2_t *)pool_get(&(sim->velocity_pool), creature->masses[i].id);
+                if (vel) {
+                    creature_vel = vec2_add(creature_vel, *vel);
+                }
+            }
+            snprintf(buff, sizeof(buff), "Creature Velocity: (%.2f, %.2f) units/s",
+                creature_vel.x, creature_vel.y);
+            textbox_set_content(&(sim->creature_infos), buff);
         }
-        snprintf(buff, sizeof(buff), "Creature Velocity: (%.2f, %.2f) units/s",
-            creature_vel.x, creature_vel.y);
-        textbox_set_content(&(sim.creature_infos), buff);
 
         // Update simulation
-        system_muscle(&(sim.mass_manager), &(sim.joint_pool), sfTime_asSeconds(sim.time));
-        system_drag(&sim, 6.0f, 0.15f);
-        system_purge_joints(&sim);
-        system_integrate(&sim);
-        system_solve_joints(&sim, 8);
-        system_derive_velocity(&sim);
-        //system_fitness(&sim);
+        system_muscle(&(sim->mass_manager), &(sim->joint_pool), sfTime_asSeconds(sim->time));
+        system_drag(sim, 6.0f, 0.15f);
+        system_purge_joints(sim);
+        system_integrate(sim);
+        system_solve_joints(sim, 8);
+        system_derive_velocity(sim);
+        //system_fitness(sim);
 
-        sfRenderWindow_clear(sim.window, sfBlack);
-        sfRenderWindow_setView(sim.window, sim.view);
-        sfRenderWindow_drawSprite(sim.window, sim.background, NULL);
+        sfRenderWindow_clear(sim->window, sfBlack);
+        sfRenderWindow_setView(sim->window, sim->view);
+        sfRenderWindow_drawSprite(sim->window, sim->background, NULL);
 
         // Render balls
-        system_draw_joints(&sim, sim.window, pixels_per_unit);
-        system_draw_circles(&(sim.radius_pool), &(sim.position_pool), sim.circle, sim.window, pixels_per_unit);
+        system_draw_joints(sim, sim->window, pixels_per_unit);
+        system_draw_circles(&(sim->radius_pool), &(sim->position_pool), sim->circle, sim->window, pixels_per_unit);
 
         // Render UI
-        textbox_display(sim.window, &(sim.sim_infos));
-        textbox_display(sim.window, &(sim.creature_infos));
+        textbox_display(sim->window, &(sim->sim_infos));
+        textbox_display(sim->window, &(sim->creature_infos));
 
-        sfRenderWindow_display(sim.window);
+        sfRenderWindow_display(sim->window);
         frame++;
     }
 
     // Ressource cleaning
-    cleanup_simulator(&sim);
+    cleanup_simulator(sim);
+    free(sim);
     return 0;
 }
